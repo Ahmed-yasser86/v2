@@ -30,6 +30,12 @@ jobs:
    steps:
       - name: Checkout
         uses: actions/checkout@v5
+     
+      - name: Cache
+        uses: actions/cache@v5.0.5
+        with:
+          path: ~/.npm
+          key: dep-node-module- ${{ hashFiles('**/package-lock.json') }}
 
       - name: Install dependencies
         run: npm ci
@@ -46,6 +52,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Cache
+        uses: actions/cache@v5.0.5
+        with:
+          path: ~/.npm
+          key: dep-node-module- ${{ hashFiles('**/package-lock.json') }}
+
+
       - name: Install dependencies
         run: npm ci
 
@@ -61,6 +74,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+
+
+      - name: Cache
+        uses: actions/cache@v5.0.5
+        with:
+          path: ~/.npm
+          key: dep-node-module- ${{ hashFiles('**/package-lock.json') }}
+
 
       - name: Install dependencies
         run: npm ci
@@ -89,6 +110,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+
+
+      - name: Cache
+        uses: actions/cache@v5.0.5
+        with:
+          path: ~/.npm
+          key: dep-node-module- ${{ hashFiles('**/package-lock.json') }}
+
 
       - name: Install dependencies
         run: npm ci
