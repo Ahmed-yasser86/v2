@@ -5,147 +5,117 @@ on:
   push:
     branches:
       - main
-      - 'dev-*'
       - dev
-
-
-
+      - 'dev-*'
   pull_request:
     types:
       - opened
-      - edited 
+      - edited
     branches:
-       - main
-       - 'dev-*'
-       - dev
-
-
+      - main
+      - dev
+      - 'dev-*'
 
 jobs:
-
   lint:
-
-   runs-on: ubuntu-latest
-
-   steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-     
-      - name: Cache
-        uses: actions/cache@v5.0.5
-        with:
-          path: node_modules
-          key: dep-node-module- ${{ hashFiles('**/package-lock.json') }}
-
-        if: steps.Cache.outputs.cache-hit != 'true'
-      - name: Install dependencies
-        run: npm ci
-
-      - name: lintng
-        run: npm run lint
-
-  Test:
-    needs: lint
-
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
-      - name: Cache
-        uses: actions/cache@v5.0.5
+      - name: Cache Dependencies
+        id: cache
+        uses: actions/cache@v4
         with:
-          path: ~/.npm
-          key: dep-node-module- ${{ hashFiles('**/package-lock.json') }}
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
 
-        if: steps.Cache.outputs.cache-hit != 'true'
+      - name: Install Dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: npm ci
 
-      - name: Install dependencies
+      - name: Lint
+        run: npm run lint
+
+  test:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache Dependencies
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+
+      - name: Install Dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
         run: npm ci
 
       - name: Run Tests
-        run: npm test
         id: myTests
+        run: npm test
 
-      - name: Upload a Build Artifact
+      - name: Upload Test Report
         if: failure() && steps.myTests.outcome == 'failure'
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@v4
         with:
           name: test-reports
           path: test.json
 
-
-  BuiLd:
-    needs: Test
-
+  build:
+    needs: test
     runs-on: ubuntu-latest
     outputs:
-      script-file: ${{steps.publish.outputs.file-name}}
+      script-file: ${{ steps.publish.outputs.file-name }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
-        if: steps.Cache.outputs.cache-hit != 'true'
-
-      - name: Cache
-        uses: actions/cache@v5.0.5
+      - name: Cache Dependencies
+        id: cache
+        uses: actions/cache@v4
         with:
-          path: ~/.npm
-          key: dep-node-module- ${{ hashFiles('**/package-lock.json') }}
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
 
-        if: steps.Cache.outputs.cache-hit != 'true'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run Tests
-        run: npm run build
-
-      - name: Store output var
-        id: publish
-        run: find dist/assets/*.js -type f -execdir echo "file-name={}" >> "$GITHUB_OUTPUT" ';'
-     
-   
-      - name: Upload a Build Artifact
-        uses: actions/upload-artifact@v7.0.1
-        with:
-          name: dist-files
-          path: dist
-
-     
-
-  deploy:
-    needs: [lint, Test, BuiLd]
-    runs-on: ubuntu-latest
-    
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-
-      - name: Cache
-        uses: actions/cache@v5.0.5
-        with:
-          path: ~/.npm
-          key: dep-node-module- ${{ hashFiles('**/package-lock.json') }}
-
-        if: steps.Cache.outputs.cache-hit != 'true'
-
-      - name: Install dependencies
+      - name: Install Dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
         run: npm ci
 
       - name: Build Project
         run: npm run build
-     
+
+      - name: Store Output Variable
+        id: publish
+        shell: bash
+        run: |
+          FILE=$(find dist/assets -name "*.js" | head -n 1)
+          echo "file-name=$FILE" >> $GITHUB_OUTPUT
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-files
+          path: dist
+
+  deploy:
+    needs: [lint, test, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Print Variable
-        run : echo "${{needs.BuiLd.outputs.script-file}}"
-        
-      - name: Download a Build Artifact
-        uses: actions/download-artifact@v8.0.1
+        run: echo "${{ needs.build.outputs.script-file }}"
+
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
         with:
           name: dist-files
 
-      - name: Deploying
+      - name: Deploy
         run: echo "deploying..."
