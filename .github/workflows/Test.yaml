@@ -64,6 +64,15 @@ jobs:
 
       - name: Run Tests
         run: npm test
+        id: myTests
+
+      - name: Upload a Build Artifact
+        if: failure() && steps.run-tests.outcome == 'failure'
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: test-reports
+          path: test.json
+
 
   BuiLd:
     needs: Test
