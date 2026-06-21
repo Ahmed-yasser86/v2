@@ -1,0 +1,16 @@
+name: ReusableWorkflow
+
+on:
+    workflow_call:
+     inputs:
+        artifact-name: 
+          description: dssdas
+          required: false   
+          default: dist
+          type: string  
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - run: echo "Reusable workflow ${{inputs.artifact-name}}"
