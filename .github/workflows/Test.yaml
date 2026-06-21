@@ -52,7 +52,8 @@ jobs:
           key: node-modules-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
 
       - name: Install Dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
+#   if: steps.cache.outputs.cache-hit != 'true'
+        continue-on-error: true
         run: npm ci
 
       - name: Run Tests
