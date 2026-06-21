@@ -52,11 +52,11 @@ jobs:
           key: node-modules-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
 
       - name: Install Dependencies
-#   if: steps.cache.outputs.cache-hit != 'true'
-        continue-on-error: true
+        if: steps.cache.outputs.cache-hit != 'true'
         run: npm ci
 
       - name: Run Tests
+        continue-on-error: true
         id: myTests
         run: npm test
 
