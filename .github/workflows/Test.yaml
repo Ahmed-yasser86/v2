@@ -67,7 +67,7 @@ jobs:
         id: myTests
 
       - name: Upload a Build Artifact
-        if: failure() && steps.run-tests.outcome == 'failure'
+        if: failure() && steps.myTests.outcome == 'failure'
         uses: actions/upload-artifact@v7.0.1
         with:
           name: test-reports
